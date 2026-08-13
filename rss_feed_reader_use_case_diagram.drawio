@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Claude" version="24.0.0">
+  <diagram name="Use Case Diagram" id="rssUseCaseDiagram">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- System boundary -->
+        <mxCell id="boundary" value="RSS Feed Reader System" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="200" y="40" width="600" height="460" as="geometry" />
+        </mxCell>
+
+        <!-- Use cases: left column -->
+        <mxCell id="uc_subscribe" value="Subscribe to feed" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="240" y="70" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_unsubscribe" value="Unsubscribe from feed" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="240" y="150" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_validate" value="Validate feed URL" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="240" y="230" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_viewlist" value="View article list" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="240" y="310" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Use cases: right column -->
+        <mxCell id="uc_poll" value="Poll feed for updates" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="600" y="70" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_failnotice" value="Send failure notice" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="150" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_monitor" value="Monitor feed health" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="600" y="230" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_markread" value="Mark article read" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="600" y="310" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Human actors -->
+        <mxCell id="actor_reader" value="Reader" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_admin" value="Administrator" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="900" y="150" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Non-human / external system actors -->
+        <mxCell id="actor_scheduler" value="Scheduler&#10;&#171;time-triggered&#187;" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="30" y="260" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_feedsource" value="Feed Source&#10;&#171;external system&#187;" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="30" y="340" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_notification" value="Notification Service&#10;&#171;external system&#187;" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="850" y="260" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Associations (plain lines, no arrowheads) -->
+        <mxCell id="e1" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_reader" target="uc_subscribe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_reader" target="uc_unsubscribe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_reader" target="uc_viewlist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="actor_reader" target="uc_markread">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e5" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_scheduler" target="uc_poll">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e6" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_admin" target="uc_monitor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e7" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_notification" target="uc_failnotice">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e8" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;" edge="1" parent="1" source="actor_feedsource" target="uc_validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=none;html=1;endArrow=none;startArrow=none;rounded=0;exitX=1;exitY=0.3;exitDx=0;exitDy=0;" edge="1" parent="1" source="actor_feedsource" target="uc_poll">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Include relationship: Subscribe to feed includes Validate feed URL -->
+        <mxCell id="inc1" value="&#171;include&#187;" style="edgeStyle=none;html=1;endArrow=open;dashed=1;rounded=0;fontStyle=2;" edge="1" parent="1" source="uc_subscribe" target="uc_validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Extend relationship: Poll feed for updates extended by Send failure notice -->
+        <mxCell id="ext1" value="&#171;extend&#187;&#10;[fetch fails OR parse error]" style="edgeStyle=none;html=1;endArrow=open;dashed=1;rounded=0;fontStyle=2;" edge="1" parent="1" source="uc_failnotice" target="uc_poll">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
