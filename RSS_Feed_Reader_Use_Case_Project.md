@@ -52,3 +52,10 @@ See the diagram rendered in the conversation above the document. It shows the sy
 - If your rubric wants every external system actor drawn with an explicit association line (rather than described in prose, as done above for Feed source), add two lines from `Feed source` to `Validate feed URL` and `Poll feed for updates` on the diagram.
 - The include relationship is mandatory-and-always-run (Validate feed URL runs on *every* subscribe attempt); the extend relationship is conditional (Send failure notice only runs *when the guard is true*) — that's the graded distinction to call out explicitly if asked to justify the choice.
 - Feel free to swap "Search articles" or "Unsubscribe from feed" in as a fourth full spec if your team wants more coverage; the diagram already includes both as valid targets.
+
+
+20251501170
+20251501137
+20251501139
+20251501143
+20251501161
