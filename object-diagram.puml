@@ -1,0 +1,70 @@
+@startuml object-diagram
+title RSS Feed Reader — Object Diagram (Sample Instance)
+
+skinparam object {
+  BackgroundColor White
+  BorderColor #333333
+  ArrowColor #333333
+}
+
+object "reader1 : Reader" as reader1 {
+  readerId = "R001"
+  name = "Pratham Vaghela"
+  email = "pratham@example.com"
+}
+
+object "feed1 : Feed" as feed1 {
+  feedId = "F001"
+  feedUrl = "https://techcrunch.com/feed"
+  status = "healthy"
+  lastPolledAt = "2026-08-19 09:00"
+  consecutiveFailureCount = 0
+}
+
+object "sub1 : Subscription" as sub1 {
+  subscriptionId = "S001"
+  subscribedDate = "2026-08-01"
+}
+
+object "article1 : Article" as article1 {
+  guid = "guid-123"
+  title = "New AI chip announced"
+  link = "https://techcrunch.com/ai-chip"
+  publishedDate = "2026-08-18"
+}
+
+object "article2 : Article" as article2 {
+  guid = "guid-124"
+  title = "Startup raises Series A"
+  link = "https://techcrunch.com/startup-a"
+  publishedDate = "2026-08-19"
+}
+
+object "status1 : ArticleStatus" as status1 {
+  isRead = true
+  readAt = "2026-08-18 10:15"
+}
+
+object "status2 : ArticleStatus" as status2 {
+  isRead = false
+  readAt = null
+}
+
+object "notice1 : FailureNotice" as notice1 {
+  noticeId = "N001"
+  reason = "Connection timeout"
+  createdAt = "2026-08-10 03:00"
+  sent = true
+}
+
+reader1 -- sub1
+sub1   -- feed1
+feed1  -- article1
+feed1  -- article2
+reader1 -- status1
+article1 -- status1
+reader1 -- status2
+article2 -- status2
+feed1  -- notice1
+
+@enduml

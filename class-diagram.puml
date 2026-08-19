@@ -1,0 +1,91 @@
+@startuml class-diagram
+title RSS Feed Reader — Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor #333333
+  ArrowColor #333333
+}
+
+class Reader {
+  -readerId: String
+  -name: String
+  -email: String
+  --
+  +subscribeToFeed(feed: Feed): Subscription
+  +unsubscribeFromFeed(feed: Feed): void
+  +viewArticles(): List<Article>
+  +markAsRead(article: Article): void
+  +markAsUnread(article: Article): void
+}
+
+class Feed {
+  -feedId: String
+  -feedUrl: String
+  -status: String
+  -lastPolledAt: DateTime
+  -consecutiveFailureCount: int
+  --
+  +poll(): void
+  +validate(): boolean
+  +getArticles(): List<Article>
+  +recordFailure(): void
+  +recordSuccess(): void
+}
+
+class Subscription {
+  -subscriptionId: String
+  -subscribedDate: DateTime
+  --
+  +create(): void
+  +remove(): void
+}
+
+class Article {
+  -guid: String
+  -title: String
+  -link: String
+  -publishedDate: DateTime
+  -content: String
+  --
+  +getInfo(): String
+}
+
+class ArticleStatus {
+  -isRead: boolean
+  -readAt: DateTime
+  --
+  +markRead(): void
+  +markUnread(): void
+}
+
+class FailureNotice {
+  -noticeId: String
+  -reason: String
+  -createdAt: DateTime
+  -sent: boolean
+  --
+  +send(): void
+}
+
+' --- Associations ---
+Reader   "1" -- "0..*" Subscription : subscribes via
+Feed     "1" -- "0..*" Subscription : subscribed through
+Feed     "1" -- "0..*" Article      : produces >
+Reader   "1" -- "0..*" ArticleStatus : tracks >
+Article  "1" -- "0..*" ArticleStatus : tracked by
+Feed     "1" -- "0..*" FailureNotice : generates >
+
+note right of Subscription
+  Association class connecting
+  Reader and Feed.
+end note
+
+note right of ArticleStatus
+  Association class connecting
+  Reader and Article — represents
+  the per-reader read/unread state.
+end note
+
+@enduml
