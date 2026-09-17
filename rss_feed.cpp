@@ -6,35 +6,60 @@ class Feed;
 class Reader;
 
 class Feed {
+private:
+    static int totalFeedsCreated; 
+
 protected:
     string feedUrl;
 
 public:
     Feed() {
-        feedUrl = "https://indianexpress.com/section/city/ahmedabad/feed/"; //Instead of Ahmedabad user can give input
+        feedUrl = "https://indianexpress.com/section/city/ahmedabad/feed/";
+        totalFeedsCreated++; 
     }
     
     Feed(string url) {
         feedUrl = url;
+        totalFeedsCreated++; 
+    }
+
+    static void displayFeedCount() {
+        cout << "[Static Info] Total Feed objects currently in memory: " 
+             << totalFeedsCreated << endl;
     }
 
     void updateFeed() {
         cout << "Updating all articles from: " << feedUrl << endl;
-        // New news will be fetched from the feed URL and stored in the database.
     }
-
-    void updateFeed(int count) {
-        cout << "Updating " << count << " latest articles from: " << feedUrl << endl;
-    }
-
-    void operator%(const Feed& other) {
-        cout << "Fetching news from both feeds: " << feedUrl << " AND " << other.feedUrl << endl;
-        // Fetches news from both feeds and combines them.
-    }
-
-    friend void checkAccess(const Reader& r, const Feed& f);
-};
     
+    void updateFeed(int limit) {
+        cout << "Updating top " << limit << " articles from: " << feedUrl << endl;
+    }
+
+
+    friend void operator%(const Feed& other, const Feed& another);
+    friend void checkAccess(const Reader& r, const Feed& f);
+    friend ostream& operator<<(ostream& os, const Feed& f); 
+    friend istream& operator>>(istream& is, Feed& f);
+};
+
+int Feed::totalFeedsCreated = 0;
+
+ostream& operator<<(ostream& os, const Feed& f) {
+    os << "[Feed Object] URL: " << f.feedUrl;
+    return os;
+}
+
+istream& operator>>(istream& is, Feed& f) {
+    cout << "Enter Feed URL: ";
+    is >> f.feedUrl;
+    return is;
+}
+
+void operator%(const Feed& other, const Feed& another){
+    cout << "Fetching news from both feeds: " << another.feedUrl << " and " << other.feedUrl << endl;
+}
+
 class Subscription {
 protected:
     string planType;
@@ -59,6 +84,10 @@ public:
     void displayArticle() {
         cout << "Article Title: " << title << " | Source: " << feedUrl << endl;
         cout << "Fetching content from: " << feedUrl << endl;
+    }
+
+    void displayInfo() const override {
+        cout << "[Derived Article] Title: " << title << " | Source: " << feedUrl << endl;
     }
 };
 
@@ -98,6 +127,10 @@ private:
     string readerName;
 
 public:
+    Reader() : ArticleStatus(), Subscription() {
+        readerName = "Unknown";
+    }
+
     Reader(string name, string url, string t, bool read, string plan) 
         : ArticleStatus(url, t, read), Subscription(plan) {
         readerName = name;
@@ -110,40 +143,76 @@ public:
         displayStatus();
         cout << "----------------------\n" << endl;
     }
-    
+
     friend void checkAccess(const Reader& r, const Feed& f);
+    friend ostream& operator<<(ostream& os, const Reader& r);
+    friend istream& operator>>(istream& is, Reader& r);
 };
 
-// This function can access private/protected members of BOTH Reader and Feed
+ostream& operator<<(ostream& os, const Reader& r) {
+    os << "\n--- Reader Profile (Stream Output) ---\n"
+       << "Name: " << r.readerName << "\n"
+       << "Subscription Plan: " << r.planType << "\n"
+       << "Article Title: " << r.title << " | Source: " << r.feedUrl << "\n"
+       << "Status: " << (r.isRead ? "Read" : "Unread") << "\n"
+       << "--------------------------------------";
+    return os;
+}
+
+istream& operator>>(istream& is, Reader& r) {
+    cout << "Enter Reader Name: ";
+    is >> r.readerName;
+    
+    cout << "Enter Subscription Plan: ";
+    is >> r.planType;
+    
+    cout << "Enter Feed URL: ";
+    is >> r.feedUrl;
+    
+    cout << "Enter Article Title (one word): ";
+    is >> r.title;
+    
+    cout << "Has it been read? (1 for Yes, 0 for No): ";
+    is >> r.isRead;
+    
+    return is;
+}
+
 void checkAccess(const Reader& r, const Feed& f) {
     cout << "[System Check]: Reader '" << r.readerName 
          << "' is trying to ping external feed URL: '" << f.feedUrl << "'" << endl;
 }
 
+void printFeedByValue(Feed f) {
+    f.displayInfo();
+}
+
+void printFeedByReference(const Feed& f) {
+    f.displayInfo();
+}
+
 int main() {
-    // Function Overloading using Feed
+    cout << "=== Start of Program ===" << endl;
+    Feed::displayFeedCount(); 
+
+    cout << "\n=== Demonstrating Object Slicing ===" << endl;
+    Article myArticle("http://tech-news.com/rss", "Understanding C++ Slicing");
+    Feed::displayFeedCount(); 
+    
+    cout << "\n1. Passing by Value (SLICING OCCURS):" << endl;
+    printFeedByValue(myArticle); 
+
+    cout << "After Pass by Value:" << endl;
+    Feed::displayFeedCount(); 
+    cout << "\n2. Passing by Reference (NO SLICING):" << endl;
+    printFeedByReference(myArticle);
+    
+    cout << "\n====================================\n" << endl;
+
     Feed techFeed("http://tech-news.com/rss");
-    techFeed.updateFeed();      
-    techFeed.updateFeed(5);
-
-    // FailureNotice 
-    cout << endl;
-    FailureNotice error("http://broken-link.com/rss", 404);
-    error.showError();
-
-    // Hybrid Inheritance Reader Inherits from ArticleStatus and Subscription
+    cout << "Printing techFeed directly: " << techFeed << endl;
+    Feed::displayFeedCount(); 
     Reader myReader("Alice", "http://cpp-tutorials.com/rss", "Learn OOP", true, "Premium");
-    myReader.displayReaderProfile();
-
-    // Friend Function
-    Feed newFeed("http://new-blog.com/rss");
-    checkAccess(myReader, newFeed);
-
-    // Operator Overloading
-    cout << endl;
-    Feed feedA("http://cpp-tutorials.com/rss");
-    Feed feedB("http://different-site.com/rss");
-    feedA % feedB;
-
+    Feed::displayFeedCount();
     return 0;
 }
