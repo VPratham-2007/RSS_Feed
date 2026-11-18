@@ -1,5 +1,5 @@
 @startuml object-diagram
-title RSS Feed Reader — Object Diagram (Sample Instance)
+title RSS Feed Reader — Object Diagram (Sample Instance, matches server.cpp)
 
 skinparam object {
   BackgroundColor White
@@ -7,64 +7,70 @@ skinparam object {
   ArrowColor #333333
 }
 
+' Reader is an ArticleStatus (-> Article -> Feed) and a Subscription,
+' so its object holds the inherited fields as well.
 object "reader1 : Reader" as reader1 {
-  readerId = "R001"
-  name = "Pratham Vaghela"
-  email = "pratham@example.com"
-}
-
-object "feed1 : Feed" as feed1 {
-  feedId = "F001"
-  feedUrl = "https://techcrunch.com/feed"
-  status = "healthy"
-  lastPolledAt = "2026-08-19 09:00"
-  consecutiveFailureCount = 0
+  readerName = "Alice"
+  feedUrl = "https://indianexpress.com/section/city/ahmedabad/feed/"
+  title = "Welcome"
+  isRead = false
+  planType = "Premium"
+  activeDays = 45
 }
 
 object "sub1 : Subscription" as sub1 {
-  subscriptionId = "S001"
-  subscribedDate = "2026-08-01"
+  planType = "Premium"
+  activeDays = 45
 }
 
-object "article1 : Article" as article1 {
-  guid = "guid-123"
-  title = "New AI chip announced"
-  link = "https://techcrunch.com/ai-chip"
-  publishedDate = "2026-08-18"
+object "bookmark1 : Bookmark" as bookmark1 {
+  url = "https://archlinux.org/feeds/news/"
 }
 
-object "article2 : Article" as article2 {
-  guid = "guid-124"
-  title = "Startup raises Series A"
-  link = "https://techcrunch.com/startup-a"
-  publishedDate = "2026-08-19"
+object "feed1 : Feed" as feed1 {
+  feedUrl = "https://indianexpress.com/section/city/ahmedabad/feed/"
 }
 
-object "status1 : ArticleStatus" as status1 {
+object "feed2 : Feed" as feed2 {
+  feedUrl = "https://archlinux.org/feeds/news/"
+}
+
+object "parsed1 : ParsedFeed" as parsed1 {
+  feedTitle = "City - Ahmedabad"
+}
+
+object "article1 : ArticleStatus" as article1 {
+  feedUrl = "https://indianexpress.com/article/cities/ahmedabad/sample-1/"
+  title = "Sample headline 1"
+  pubDate = "Wed, 18 Nov 2026 09:00:00 +0530"
+  summary = "Short description of the first item"
   isRead = true
-  readAt = "2026-08-18 10:15"
 }
 
-object "status2 : ArticleStatus" as status2 {
+object "article2 : ArticleStatus" as article2 {
+  feedUrl = "https://indianexpress.com/article/cities/ahmedabad/sample-2/"
+  title = "Sample headline 2"
+  pubDate = "Wed, 18 Nov 2026 10:30:00 +0530"
+  summary = "Short description of the second item"
   isRead = false
-  readAt = null
+}
+
+object "cache1 : Cache<string>" as cache1 {
+  data = "https://indianexpress.com/section/city/ahmedabad/feed/ (2 cached items)"
 }
 
 object "notice1 : FailureNotice" as notice1 {
-  noticeId = "N001"
-  reason = "Connection timeout"
-  createdAt = "2026-08-10 03:00"
-  sent = true
+  feedUrl = "https://example.com/broken-feed"
+  errorCode = 502
 }
 
-reader1 -- sub1
-sub1   -- feed1
-feed1  -- article1
-feed1  -- article2
-reader1 -- status1
-article1 -- status1
-reader1 -- status2
-article2 -- status2
-feed1  -- notice1
+sub1 .. reader1 : plan copied into\nReader(name, sub)
+bookmark1 .. feed2 : converted to
+feed1 -- parsed1 : load produces
+parsed1 -- article1
+parsed1 -- article2
+cache1 .. feed1 : caches items of
+notice1 .. feed1 : created when a\nload like this fails
+reader1 .. feed1 : reads from\n(feedUrl)
 
 @enduml

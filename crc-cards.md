@@ -8,46 +8,77 @@
 
 # CRC Cards — RSS Feed Reader
 
+The cards match the classes in `server.cpp`. "Inherits from" shows the base classes used in the code.
+
 ## 1. Reader
+
+Inherits from: ArticleStatus, Subscription
 
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **Reader** | Subscribe to feeds; unsubscribe from feeds; view subscribed articles; mark articles as read or unread | Subscription, ArticleStatus, Article |
+| **Reader** | Store the reader's name; hold the reader's plan (inherited from Subscription); hold the current article and read/unread state (inherited from ArticleStatus); display the reader profile | Subscription, ArticleStatus, Feed |
 
 ## 2. Feed
 
+Inherits from: none (base class)
+
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **Feed** | Store feed information and URL; maintain feed status; track last polling time; track consecutive failures; provide articles belonging to the feed; record successful or failed polling state | Subscription, Article, FailureNotice |
+| **Feed** | Store the feed URL; count the Feed objects created (static counter); be created from a URL, from the default URL, or from a Bookmark; download the feed XML for a given article limit; display feed information (overridden by Article); signal a failed load with a FeedException | Bookmark, Article, FailureNotice, Cache |
 
 ## 3. Subscription
 
+Inherits from: none (base class)
+
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **Subscription** | Connect a Reader with a Feed; record subscription date; support creation of a subscription; support removal of a subscription; help prevent duplicate subscriptions | Reader, Feed |
+| **Subscription** | Store plan type and active days; derive the plan (Free, Trial, Premium) from the days; convert an int into a Subscription and a Subscription back into an int; provide the plan text for display; reject negative days (InvalidSubscriptionException) | Reader |
 
 ## 4. Article
 
+Inherits from: Feed
+
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **Article** | Store article GUID, title, link, publication date, and content; belong to a Feed; provide article information for readers | Feed, ArticleStatus |
+| **Article** | Store title, publication date, and summary; keep the article link as its URL (inherited feedUrl); display article information | Feed, ArticleStatus |
 
 ## 5. ArticleStatus
 
+Inherits from: Article
+
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **ArticleStatus** | Track whether a specific Reader has read a specific Article; mark an article as read; mark an article as unread; store the read time when applicable | Reader, Article |
+| **ArticleStatus** | Track whether an article is read; report the read state; display the article together with its Read/Unread status | Article, Reader |
 
 ## 6. FailureNotice
 
+Inherits from: Feed
+
 | Class | Responsibilities | Collaborators |
 |---|---|---|
-| **FailureNotice** | Record a feed failure; store the failure reason; record notice creation time; track whether the notice has been sent | Feed |
+| **FailureNotice** | Record the URL of the feed that failed; store the error code; display a warning message for the failure | Feed |
+
+## 7. Bookmark
+
+Inherits from: none
+
+| Class | Responsibilities | Collaborators |
+|---|---|---|
+| **Bookmark** | Store the URL of a saved feed; be converted into a Feed when a saved feed is opened | Feed |
+
+## 8. Cache
+
+Inherits from: none (template class `Cache<T>`)
+
+| Class | Responsibilities | Collaborators |
+|---|---|---|
+| **Cache** | Hold data of any type; show the cached item; return the cached data | Feed |
 
 ## Summary of Collaborations
 
-- A **Reader** collaborates with **Subscription** to manage followed feeds.
-- A **Subscription** connects a **Reader** and a **Feed**.
-- A **Feed** produces many **Article** objects.
-- **ArticleStatus** connects a **Reader** with an **Article** to maintain individual read/unread state.
-- A **Feed** may generate **FailureNotice** objects when polling fails.
+- A **Reader** is an **ArticleStatus** and a **Subscription**; through ArticleStatus it is also an **Article** and a **Feed**.
+- A **Bookmark** is converted into a **Feed** when a saved feed is opened.
+- A **Feed** is loaded and parsed into **ArticleStatus** objects, one for each feed item.
+- An **Article** is a **Feed**; an **ArticleStatus** is an **Article**.
+- A **FailureNotice** is created (and is itself a **Feed**) when loading a feed fails.
+- A **Cache** reports the items already loaded for a feed URL.

@@ -1,5 +1,5 @@
 @startuml class-diagram
-title RSS Feed Reader — Class Diagram
+title RSS Feed Reader — Class Diagram (matches server.cpp)
 
 skinparam classAttributeIconSize 0
 skinparam class {
@@ -8,84 +8,143 @@ skinparam class {
   ArrowColor #333333
 }
 
-class Reader {
-  -readerId: String
-  -name: String
-  -email: String
+class "Cache<T>" as Cache <<template>> {
+  -data: T
   --
-  +subscribeToFeed(feed: Feed): Subscription
-  +unsubscribeFromFeed(feed: Feed): void
-  +viewArticles(): List<Article>
-  +markAsRead(article: Article): void
-  +markAsUnread(article: Article): void
+  +Cache()
+  +Cache(d: T)
+  +showCache(): void
+  +getData(): T
+}
+
+class Bookmark {
+  +url: String
+  --
+  +Bookmark(u: String)
 }
 
 class Feed {
-  -feedId: String
-  -feedUrl: String
-  -status: String
-  -lastPolledAt: DateTime
-  -consecutiveFailureCount: int
+  -{static} totalFeedsCreated: int
+  #feedUrl: String
   --
-  +poll(): void
-  +validate(): boolean
-  +getArticles(): List<Article>
-  +recordFailure(): void
-  +recordSuccess(): void
+  +Feed()
+  +Feed(url: String)
+  +Feed(b: Bookmark)
+  +{static} displayFeedCount(): void
+  +{static} getFeedCount(): int
+  +getUrl(): String
+  +updateFeed(): void
+  +updateFeed(limit: int): String
+  +displayInfo(): void
 }
 
 class Subscription {
-  -subscriptionId: String
-  -subscribedDate: DateTime
+  #planType: String
+  #activeDays: int
   --
-  +create(): void
-  +remove(): void
+  +Subscription()
+  +Subscription(plan: String, days: int)
+  +Subscription(days: int)
+  +operator int(): int
+  +getPlanString(): String
+  +displayPlan(): void
 }
 
 class Article {
-  -guid: String
-  -title: String
-  -link: String
-  -publishedDate: DateTime
-  -content: String
+  #title: String
+  #pubDate: String
+  #summary: String
   --
-  +getInfo(): String
+  +getTitle(): String
+  +getDate(): String
+  +getSummary(): String
+  +displayArticle(): void
+  +displayInfo(): void
 }
 
 class ArticleStatus {
-  -isRead: boolean
-  -readAt: DateTime
+  #isRead: bool
   --
-  +markRead(): void
-  +markUnread(): void
+  +getRead(): bool
+  +displayStatus(): void
 }
 
 class FailureNotice {
-  -noticeId: String
-  -reason: String
-  -createdAt: DateTime
-  -sent: boolean
+  -errorCode: int
   --
-  +send(): void
+  +FailureNotice(url: String, code: int)
+  +showError(): void
 }
 
-' --- Associations ---
-Reader   "1" -- "0..*" Subscription : subscribes via
-Feed     "1" -- "0..*" Subscription : subscribed through
-Feed     "1" -- "0..*" Article      : produces >
-Reader   "1" -- "0..*" ArticleStatus : tracks >
-Article  "1" -- "0..*" ArticleStatus : tracked by
-Feed     "1" -- "0..*" FailureNotice : generates >
+class Reader {
+  -readerName: String
+  --
+  +getName(): String
+  +displayReaderProfile(): void
+}
+
+class FeedException {
+  #customMsg: String
+  --
+  +what(): String
+}
+
+class InvalidSubscriptionException {
+  +what(): String
+}
+
+class Cleanup <<RAII>> {
+  +~Cleanup()
+}
+
+class ParsedFeed <<struct>> {
+  +feedTitle: String
+  +articles: List<ArticleStatus>
+}
+
+' --- Inheritance (as implemented) ---
+Feed <|-- Article
+Feed <|-- FailureNotice
+Article <|-- ArticleStatus
+ArticleStatus <|-- Reader
+Subscription <|-- Reader
+FeedException <|-- InvalidSubscriptionException
+
+' --- Associations / dependencies ---
+Bookmark ..> Feed : converts to\n(class-to-class)
+ParsedFeed "1" o-- "0..*" ArticleStatus : holds parsed\nitems of a feed
+Feed ..> FeedException : throws when\nload / parse fails
+Subscription ..> InvalidSubscriptionException : rejected when\ndays < 0
+Cache ..> Feed : reports cached\nitems of a feed URL
 
 note right of Subscription
-  Association class connecting
-  Reader and Feed.
+  Holds the reader's plan
+  (Free / Trial / Premium) derived
+  from activeDays. int converts to
+  Subscription and back.
+end note
+
+note bottom of Reader
+  Multiple inheritance:
+  Reader is an ArticleStatus
+  (and therefore an Article and a Feed)
+  and also a Subscription.
 end note
 
 note right of ArticleStatus
-  Association class connecting
-  Reader and Article — represents
-  the per-reader read/unread state.
+  isRead is the read/unread state of
+  an article. The web page toggles it
+  with "Mark read / Mark unread".
+end note
+
+note right of FailureNotice
+  Created in the /api/feed handler when
+  a FeedException is caught (HTTP 502).
+end note
+
+note right of Cleanup
+  Destructor runs when the handler scope
+  ends: the "finally" equivalent.
 end note
 
 @enduml

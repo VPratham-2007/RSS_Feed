@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSS Feed Reader</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 820px; margin: 0 auto; padding: 24px 16px; line-height: 1.5; }
+  h1 { margin-bottom: 4px; }
+  section { border: 1px solid gray; border-radius: 6px; padding: 12px 16px; margin: 16px 0; }
+  label { display: block; margin: 8px 0 2px; font-size: 0.9rem; }
+  input, select, button { font-size: 1rem; padding: 6px 10px; }
+  input[type=text], input[type=url], input[type=number], select { width: 100%; box-sizing: border-box; }
+  button { cursor: pointer; margin: 8px 8px 0 0; }
+  .article { border-top: 1px solid gray; padding: 12px 0; }
+  .article.read { opacity: 0.55; }
+  .article a { font-weight: 600; }
+  .small { font-size: 0.85rem; opacity: 0.75; }
+  #error { color: crimson; font-weight: 600; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<h1>RSS Feed Reader</h1>
+<div class="small" id="info">Total feeds loaded: 0</div>
+
+<section>
+  <strong>Reader &amp; Subscription</strong>
+  <label>Reader Name</label>
+  <input type="text" id="readerName" value="papon">
+  <label>Subscription Days</label>
+  <input type="number" id="days" value="45">
+  <button onclick="saveReader()">Save Reader</button>
+  <div id="plan" class="small" style="margin-top:6px;"></div>
+</section>
+
+<section>
+  <strong>Feed Loader</strong>
+  <label>Feed URL</label>
+  <input type="url" id="feedUrl" value="https://indianexpress.com/section/city/ahmedabad/feed/">
+  <label>Number of articles</label>
+  <input type="number" id="limit" value="10" min="1" max="50">
+  <button onclick="loadFeed(false)">Load Feed</button>
+  <button onclick="addBookmark()">Bookmark Feed</button>
+  <label>Saved Bookmarks</label>
+  <select id="bookmarks" onchange="openBookmark()"></select>
+</section>
+
+<div id="error"></div>
+<div id="articles"></div>
+
+<script>
+let articles = [];
+
+async function saveReader() {
+  const errorBox = document.getElementById("error");
+  errorBox.textContent = "";
+  const name = document.getElementById("readerName").value;
+  const days = parseInt(document.getElementById("days").value, 10) || 0;
+
+  try {
+    const res = await fetch("/api/reader", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, days })
+    });
+    const data = await res.json();
+
+    if (data.status !== "ok") {
+      errorBox.textContent = data.message || "Error validating subscription";
+      return;
+    }
+    document.getElementById("plan").textContent = "Reader: " + data.readerName + " | " + data.plan;
+  } catch (e) {
+    errorBox.textContent = "Could not connect to server on port 3000.";
+  }
+}
+
+async function loadFeed(fromBookmark = false) {
+  const errorBox = document.getElementById("error");
+  errorBox.textContent = "";
+  const url = document.getElementById("feedUrl").value.trim();
+  const limit = parseInt(document.getElementById("limit").value, 10) || 10;
+
+  try {
+    const api = `/api/feed?url=${encodeURIComponent(url)}&limit=${limit}${fromBookmark ? "&bookmark=1" : ""}`;
+    const res = await fetch(api);
+    const data = await res.json();
+
+    if (data.totalFeedsCreated !== undefined) {
+      document.getElementById("info").textContent = "Total feeds loaded: " + data.totalFeedsCreated;
+    }
+
+    if (data.status !== "ok") {
+      errorBox.textContent = "WARNING: Failed to load feed '" + url + "' (" + data.message + ")";
+      articles = [];
+      showArticles();
+      return;
+    }
+
+    articles = data.items || [];
+    showArticles();
+  } catch (e) {
+    errorBox.textContent = "Could not reach backend server. Is the server running?";
+  }
+}
+
+function plainText(html) {
+  return new DOMParser().parseFromString(html || "", "text/html").body.textContent || "";
+}
+
+function showArticles() {
+  const box = document.getElementById("articles");
+  box.textContent = "";
+
+  articles.forEach(a => {
+    const div = document.createElement("div");
+    div.className = "article" + (a.isRead ? " read" : "");
+
+    const link = document.createElement("a");
+    link.href = a.link;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = a.title;
+
+    const meta = document.createElement("div");
+    meta.className = "small";
+    meta.textContent = (a.pubDate || "No date") + " | " + (a.isRead ? "Read" : "Unread");
+
+    const summary = document.createElement("div");
+    summary.textContent = plainText(a.description).slice(0, 220);
+
+    const btn = document.createElement("button");
+    btn.textContent = a.isRead ? "Mark unread" : "Mark read";
+    btn.onclick = () => { a.isRead = !a.isRead; showArticles(); };
+
+    div.append(link, meta, summary, btn);
+    box.appendChild(div);
+  });
+}
+
+function getBookmarks() {
+  try {
+    return JSON.parse(localStorage.getItem("cpp_rss_bookmarks")) || [
+      "https://archlinux.org/feeds/news/",
+      "https://www.reddit.com/r/cpp/.rss"
+    ];
+  } catch (e) { return []; }
+}
+
+function addBookmark() {
+  const url = document.getElementById("feedUrl").value.trim();
+  const list = getBookmarks();
+  if (url && !list.includes(url)) {
+    list.push(url);
+    localStorage.setItem("cpp_rss_bookmarks", JSON.stringify(list));
+  }
+  showBookmarks();
+}
+
+function showBookmarks() {
+  const select = document.getElementById("bookmarks");
+  select.textContent = "";
+  const first = document.createElement("option");
+  first.textContent = "-- Choose a bookmarked feed --";
+  first.value = "";
+  select.appendChild(first);
+  getBookmarks().forEach(url => {
+    const opt = document.createElement("option");
+    opt.value = url;
+    opt.textContent = url;
+    select.appendChild(opt);
+  });
+}
+
+function openBookmark() {
+  const url = document.getElementById("bookmarks").value;
+  if (!url) return;
+  document.getElementById("feedUrl").value = url;
+  loadFeed(true);
+}
+
+showBookmarks();
+saveReader();
+loadFeed(false);
+</script>
+</body>
+</html>

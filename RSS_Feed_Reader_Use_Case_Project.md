@@ -22,7 +22,7 @@ The goal of the system is simple: readers should never have to visit a website j
 
 ## 3. Use case diagram
 
-See the diagram rendered in the conversation above the document. It shows the system boundary ("RSS feed reader system") containing eight use cases:
+See the diagram rendered in the conversation above the document. It shows the system boundary ("RSS feed reader system") containing eleven use cases:
 
 1. Subscribe to feed
 2. Unsubscribe from feed
@@ -32,17 +32,25 @@ See the diagram rendered in the conversation above the document. It shows the sy
 6. View article list
 7. Mark article read
 8. Monitor feed health
+9. Set subscription plan
+10. Validate subscription days
+11. Fetch news from two feeds
+
+(Use cases 9–11 were added so the diagram also covers what the implemented prototype does; see section 5.)
 
 **Include relationship:** `Subscribe to feed` «include» `Validate feed URL` — every subscription attempt must validate the URL is a reachable, parseable feed before it's saved; this step is never optional.
+
+**Second include relationship:** `Set subscription plan` «include» `Validate subscription days` — every time a reader saves a plan, the number of days is checked first (negative days are rejected).
 
 **Extend relationship:** `Poll feed for updates` «extend» `Send failure notice`, guard condition `[fetch fails OR parse error]` — a failure notice is only generated when polling actually fails; on a normal successful poll this use case never fires.
 
 **Actor associations:**
-- Reader → Subscribe to feed, Unsubscribe from feed, View article list, Mark article read
+- Reader → Subscribe to feed, Unsubscribe from feed, View article list, Mark article read, Set subscription plan, Fetch news from two feeds
+- Feed source → Validate feed URL, Poll feed for updates, Fetch news from two feeds
 - Scheduler → Poll feed for updates
 - Administrator → Monitor feed health
 - Notification service → Send failure notice (receives the outbound notification request)
-- Feed source is invoked internally during Validate feed URL and Poll feed for updates (not shown with a direct association line to keep the diagram readable — mention this explicitly in your write-up if your instructor wants every external system drawn with a line)
+- Feed source is drawn with an association line to Validate feed URL, Poll feed for updates, and Fetch news from two feeds, because the system fetches the feed file from the publisher's server in each of them
 
 ## 4. Full use case specifications
 
@@ -186,6 +194,24 @@ See the diagram rendered in the conversation above the document. It shows the sy
 3c. Use case ends; no further administrator action is required.
 
 ---
+
+## 5. Mapping to the implemented prototype
+
+The prototype is `rss.html` (front end) plus `server.cpp` (C++ back end). In the code, a **Subscription** is the reader's plan (plan type and active days), while a feed the reader follows is a **Bookmark** that converts into a **Feed**.
+
+| Use case | Where it is in the code | Status |
+|---|---|---|
+| Subscribe to feed | "Bookmark Feed" and the bookmark list in `rss.html`; opening a bookmark calls `/api/feed?bookmark=1`, and `server.cpp` converts the Bookmark into a Feed. Bookmarks are kept in the browser (localStorage), and a duplicate URL is ignored without a message | Implemented (no reader accounts) |
+| Validate feed URL | `/api/feed` handler: `Feed::updateFeed(limit)` does the HTTP GET (a failure or HTTP 400+ throws `FeedException`), then `parseXmlWithPugi` accepts RSS 2.0, RSS 1.0, or Atom and rejects anything else | Implemented (JSON Feed is not supported) |
+| Unsubscribe from feed | — | Not in the prototype |
+| View article list | `loadFeed` and `showArticles` in `rss.html`; the server returns title, link, pubDate, description, and isRead for each item | Implemented |
+| Mark article read | "Mark read / Mark unread" button toggles `isRead` on the page (not saved on the server) | Implemented (page only) |
+| Poll feed for updates | Done on demand by "Load Feed" instead of a Scheduler. The server's cache returns the stored feed when it already holds at least the requested number of articles; otherwise it downloads and parses again. Every parsed item becomes an `ArticleStatus` with isRead = false. Items are not compared by guid | Partly implemented (no Scheduler, no guid comparison) |
+| Send failure notice | In the `/api/feed` handler, a caught `FeedException` creates `FailureNotice(url, 502)` and the page shows "WARNING: Failed to load feed …" | Partly implemented (no Notification service) |
+| Monitor feed health | Closest feature: the failure warning on the page and the "Total Feed objects created" counter (`Feed::getFeedCount`) | Not in the prototype (no dashboard, no suspension of failing feeds) |
+| Set subscription plan | "Save Reader" calls `/api/reader`; the server turns the days into a `Subscription` (int → class), keeps the reader, and returns the plan text (Free, Trial, or Premium) | Implemented |
+| Validate subscription days | `validateSubscription(days)` throws `InvalidSubscriptionException` when days is negative; the server answers HTTP 400 | Implemented |
+| Fetch news from two feeds | "Ping Dual Feeds" calls `/api/combine`, which applies the friend `operator%` to two Feed objects; the message appears on the server console | Implemented (demonstration) |
 
 ## Notes for write-up / submission
 
